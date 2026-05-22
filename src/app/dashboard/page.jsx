@@ -54,7 +54,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="font-sora font-bold text-2xl text-gray-900 mb-1">Boa tarde, Ana! 👋</h1>
+          <h1 className="font-sora font-bold text-2xl text-gray-900 mb-1">Boa tarde, Ana ! 👋</h1>
           <p className="text-gray-400 text-sm">Faltam {dias_para_enem} dias e  {mes_para_enem} meses para o ENEM. Vamos estudar?</p>
         </div>
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-600 text-sm font-semibold font-sora px-4 py-2 rounded-full">

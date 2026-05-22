@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
@@ -9,9 +9,30 @@ const TEMAS = [
   "Desafios para a valorização de comunidades e povos tradicionais no Brasil",
   "O estigma associado às doenças mentais na sociedade brasileira",
   "Invisibilidade e registro civil: garantia de acesso à cidadania no Brasil",
+  "Perspectivas acerca do envelhecimento na sociedade brasileira",
+  "Desafios para a valorização da herança africana no Brasil",
+  "Desafios para o enfrentamento da invisibilidade do trabalho de cuidado realizado pela mulher no Brasil",
+  "O desafio de reduzir as desigualdades entre as regiões do Brasil",
+  "Democratização do acesso ao cinema no Brasil",
+  "Manipulação do comportamento do usuário pelo controle de dados na Internet",
+  "Desafios para a formação educacional de surdos no Brasil",
+  "Caminhos para combater a intolerância religiosa no Brasil",
+  "A persistência da violência contra a mulher na sociedade brasileira",
+  "Publicidade infantil em questão no Brasil",
+  "Efeitos da implantação da Lei Seca no Brasil",
+  "Movimento imigratório para o Brasil no século 21",
+  "Viver em rede no século XXI: os limites entre o público e o privado",
+  "O trabalho na construção da dignidade humana",
+  "Como preservar a floresta Amazônica",
 ];
 
+function sortear3Temas() {
+  const embaralhado = [...TEMAS].sort(() => Math.random() - 0.5);
+  return embaralhado.slice(0, 3);
+}
+
 export default function RedacaoPage() {
+  const [temasSorteados, setTemasSorteados] = useState(() => sortear3Temas());
   const [temaIdx, setTemaIdx] = useState(0);
   const [texto, setTexto] = useState("");
   const [correcao, setCorrecao] = useState(null);
@@ -20,7 +41,14 @@ export default function RedacaoPage() {
   const textareaRef = useRef(null);
 
   const palavras = texto.trim() === "" ? 0 : texto.trim().split(/\s+/).length;
-  const tema = TEMAS[temaIdx];
+  const tema = temasSorteados[temaIdx];
+
+  const handleSortear = useCallback(() => {
+    setTemasSorteados(sortear3Temas());
+    setTemaIdx(0);
+    setCorrecao(null);
+    setError(null);
+  }, []);
 
   async function handleCorrigir() {
     if (palavras < 50) {
@@ -68,9 +96,19 @@ export default function RedacaoPage() {
 
       {/* Tema selector */}
       <Card className="p-4 mb-4">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 font-sora">Tema</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-sora">
+            Tema — escolha um dos sorteados
+          </p>
+          <button
+            onClick={handleSortear}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs font-semibold font-sora text-gray-500 hover:border-brand-400 hover:text-brand-500 hover:bg-brand-50 transition-all"
+          >
+            🎲 Sortear outros 3
+          </button>
+        </div>
         <div className="flex flex-col gap-2">
-          {TEMAS.map((t, i) => (
+          {temasSorteados.map((t, i) => (
             <button
               key={t}
               onClick={() => { setTemaIdx(i); setCorrecao(null); }}
@@ -80,7 +118,7 @@ export default function RedacaoPage() {
                   : "border-gray-100 hover:border-brand-200 text-gray-600"
               }`}
             >
-              {i === temaIdx && <span className="font-sora font-bold text-brand-500 mr-2">→</span>}
+              {temaIdx === i && <span className="font-sora font-bold text-brand-500 mr-2">→</span>}
               {t}
             </button>
           ))}
