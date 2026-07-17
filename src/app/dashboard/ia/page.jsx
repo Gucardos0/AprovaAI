@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase-browser";
 
 const SUGGESTIONS = [
   "Explique a Guerra Fria de forma simples",
@@ -25,12 +26,67 @@ export default function IAPage() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState(null);
+  const [sessaoId, setSessaoId] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [pontosFracos, setPontosFracos] = useState(["Redação", "História"]);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Cria sessão de chat ao entrar na página
+  useEffect(() => {
+    async function iniciarSessao() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      setUserId(user.id);
+
+      // Busca pontos fracos do último diagnóstico
+      const { data: diagData } = await supabase
+        .from("diagnostico_resultado_materia")
+        .select("materia(nome), tipo")
+        .eq("tipo", "ponto_fraco")
+        .order("created_at", { ascending: false })
+        .limit(2);
+
+      if (diagData?.length > 0) {
+        setPontosFracos(diagData.map((d) => d.materia?.nome).filter(Boolean));
+      }
+
+      // Busca prova do aluno
+      const { data: usuarioData } = await supabase
+        .from("usuario")
+        .select("prova(id)")
+        .eq("id", user.id)
+        .single();
+
+      // Cria nova sessão de chat
+      const { data: sessao } = await supabase
+        .from("chat_sessao")
+        .insert({
+          usuario_id: user.id,
+          prova_id: usuarioData?.prova?.id ?? null,
+        })
+        .select()
+        .single();
+
+      if (sessao) setSessaoId(sessao.id);
+    }
+    iniciarSessao();
+  }, []);
+
+  async function salvarMensagem(papel, conteudo) {
+    if (!sessaoId) return;
+    await supabase.from("chat_mensagem").insert({
+      sessao_id: sessaoId,
+      papel,
+      conteudo,
+    });
+  }
 
   async function sendMessage(text) {
     const msg = text ?? input.trim();
@@ -43,10 +99,14 @@ export default function IAPage() {
     const newHistory = [...messages, userMsg];
     setMessages(newHistory);
 
-    // Placeholder for streaming AI response
+    // Salva mensagem do usuário no Supabase
+    await salvarMensagem("user", msg);
+
     const aiMsg = { role: "assistant", content: "" };
     setMessages([...newHistory, aiMsg]);
     setStreaming(true);
+
+    let respostaFinal = "";
 
     try {
       const res = await fetch("/api/chat", {
@@ -55,7 +115,7 @@ export default function IAPage() {
         body: JSON.stringify({
           messages: newHistory,
           prova: "ENEM",
-          pontosFracos: ["Redação", "História"],
+          pontosFracos,
         }),
       });
 
@@ -80,21 +140,30 @@ export default function IAPage() {
             if (data === "[DONE]") break;
             try {
               const parsed = JSON.parse(data);
-              accumulated += parsed.delta ?? "";
+              const deltaText = parsed.delta ?? "";
+              const nextAccumulated = accumulated + deltaText;
+              accumulated = nextAccumulated;
               setMessages((prev) => {
                 const updated = [...prev];
-                updated[updated.length - 1] = { role: "assistant", content: accumulated };
+                updated[updated.length - 1] = {
+                  role: "assistant",
+                  content: nextAccumulated,
+                };
                 return updated;
               });
             } catch {}
           }
         }
       }
+
+      respostaFinal = accumulated;
     } catch (err) {
       setError(err.message ?? "Erro desconhecido.");
-      setMessages((prev) => prev.slice(0, -1)); // remove empty AI msg
+      setMessages((prev) => prev.slice(0, -1));
     } finally {
       setStreaming(false);
+      // Salva resposta da IA no Supabase após o streaming terminar
+      if (respostaFinal) await salvarMensagem("assistant", respostaFinal);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }
@@ -114,10 +183,14 @@ export default function IAPage() {
           🤖
         </div>
         <div>
-          <h1 className="font-sora font-bold text-lg text-gray-900">IA Tutora AprovaAI</h1>
+          <h1 className="font-sora font-bold text-lg text-gray-900">
+            IA Tutora AprovaAI
+          </h1>
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-success-400 animate-pulse-slow" />
-            <span className="text-xs text-gray-400">Online · Especialista em ENEM</span>
+            <span className="text-xs text-gray-400">
+              Online · Especialista em ENEM
+            </span>
           </div>
         </div>
       </div>
@@ -127,12 +200,17 @@ export default function IAPage() {
         {messages.map((msg, i) => (
           <div
             key={i}
-            className={cn("flex gap-2.5 animate-fade-up", msg.role === "user" && "flex-row-reverse")}
+            className={cn(
+              "flex gap-2.5 animate-fade-up",
+              msg.role === "user" && "flex-row-reverse",
+            )}
           >
             <div
               className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0",
-                msg.role === "assistant" ? "bg-brand-50 text-brand-500" : "bg-gray-100"
+                msg.role === "assistant"
+                  ? "bg-brand-50 text-brand-500"
+                  : "bg-gray-100",
               )}
             >
               {msg.role === "assistant" ? "🤖" : "👤"}
@@ -142,27 +220,27 @@ export default function IAPage() {
                 "max-w-[78%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap",
                 msg.role === "assistant"
                   ? "bg-white border border-gray-100 text-gray-800 rounded-tl-sm"
-                  : "bg-brand-500 text-white rounded-tr-sm"
+                  : "bg-brand-500 text-white rounded-tr-sm",
               )}
             >
               {msg.content}
-              {streaming && i === messages.length - 1 && msg.role === "assistant" && (
-                <span className="inline-block w-0.5 h-4 bg-brand-400 ml-0.5 animate-pulse align-middle" />
-              )}
+              {streaming &&
+                i === messages.length - 1 &&
+                msg.role === "assistant" && (
+                  <span className="inline-block w-0.5 h-4 bg-brand-400 ml-0.5 animate-pulse align-middle" />
+                )}
             </div>
           </div>
         ))}
         <div ref={bottomRef} />
       </div>
 
-      {/* Error */}
       {error && (
         <div className="bg-danger-50 border border-danger-400/20 rounded-xl px-4 py-2.5 mb-3">
           <p className="text-sm text-danger-600">⚠️ {error}</p>
         </div>
       )}
 
-      {/* Suggestion chips */}
       {messages.length <= 2 && !streaming && (
         <div className="flex flex-wrap gap-2 mb-3">
           {SUGGESTIONS.map((s) => (
@@ -197,7 +275,14 @@ export default function IAPage() {
           {streaming ? (
             <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
           ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
               <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
             </svg>
           )}

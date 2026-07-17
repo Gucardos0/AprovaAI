@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
@@ -21,61 +22,82 @@ const SECTIONS = [
   { label: "Conta", items: NAV_ITEMS.slice(6) },
 ];
 
-const data_atual = new Date()
-const dia_atual = data_atual.getDate()
-const mes_atual = data_atual.getMonth()
-const dia_enem = 8
-const mes_enem = 11
-const dias_para_enem = (dia_atual > dia_enem)? dia_atual - dia_enem : dia_enem - data_atual
-const mes_para_enem = (mes_atual > mes_enem)? mes_atual - mes_enem : mes_enem - mes_atual
-
-
 export function Sidebar() {
   const pathname = usePathname();
+ function diasParaEnem() {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const enem = new Date(ano, 10, 8);
+  if (enem < hoje) enem.setFullYear(ano + 1);
+  const diff = Math.ceil((enem - hoje) / (1000 * 60 * 60 * 24));
+  return diff;
+}
+
+const diasEnem = diasParaEnem()
 
   return (
-    <aside className="w-56 flex-shrink-0 bg-white border-r border-gray-100 flex flex-col py-5 px-3">
-      <div className="px-3 mb-6">
+    <aside className="w-64 flex-shrink-0 bg-white border-r border-slate-100 flex flex-col py-6 px-4">
+      <div className="px-3 mb-8">
         <Logo size="sm" />
       </div>
 
-      {SECTIONS.map((section) => (
-        <div key={section.label} className="mb-2">
-          <p className="px-3 mb-1 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
-            {section.label}
-          </p>
-          {section.items.map((item) => {
-            const isActive =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium font-sora transition-all duration-150",
-                  isActive
-                    ? "bg-brand-50 text-brand-500"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-gray-800"
-                )}
-              >
-                <span className="text-base w-5 text-center">{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-      ))}
+      <div className="flex-1 space-y-6">
+        {SECTIONS.map((section) => (
+          <div key={section.label}>
+            <p className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sora">
+              {section.label}
+            </p>
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const isActive =
+                  item.href === "/dashboard"
+                    ? pathname === "/dashboard"
+                    : pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold font-sora transition-all duration-200 group",
+                      isActive
+                        ? "bg-brand-50 text-brand-700"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-lg w-6 text-center transition-transform duration-200",
+                        !isActive && "group-hover:scale-110"
+                      )}
+                    >
+                      {item.icon}
+                    </span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
 
       {/* Prova badge at bottom */}
-      <div className="mt-auto px-3">
-        <div className="bg-brand-50 rounded-xl p-3">
-          <p className="text-[10px] font-semibold text-brand-400 uppercase tracking-wider mb-1">
+      <div className="mt-8 px-1">
+        <div className="bg-gradient-to-br from-brand-50 to-[#E8F5E9] rounded-2xl p-4 border border-brand-100/50 shadow-sm relative overflow-hidden">
+          {/* Efeito decorativo sutil de brilho no fundo */}
+          <div className="absolute -right-4 -top-4 w-16 h-16 bg-white/50 rounded-full blur-xl pointer-events-none" />
+          
+          <p className="text-[10px] font-bold text-brand-600/80 uppercase tracking-wider mb-1 relative z-10">
             Preparando para
           </p>
-          <p className="font-sora font-bold text-brand-600 text-sm">ENEM 2027</p>
-          <p className="text-[11px] text-brand-400 mt-0.5">{dias_para_enem} dias e  {mes_para_enem} meses restantes</p>
+          <p className="font-sora font-extrabold text-slate-800 text-base mb-3 relative z-10">
+            ENEM 2026
+          </p>
+          <div className="inline-flex items-center bg-white px-3 py-1.5 rounded-xl shadow-sm relative z-10 border border-white/50">
+            <span className="text-xs font-bold text-brand-600">
+              {diasEnem !== null ? `⏳ Faltam ${diasEnem} dias` : "Calculando..."}
+            </span>
+          </div>
         </div>
       </div>
     </aside>

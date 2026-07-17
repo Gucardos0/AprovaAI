@@ -1,7 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 const config = {
   content: [
-    "./src/pages/**/*.{js,jsx,mdx}",
     "./src/components/**/*.{js,jsx,mdx}",
     "./src/app/**/*.{js,jsx,mdx}",
   ],
@@ -13,7 +12,7 @@ const config = {
       },
       colors: {
         brand: {
-          50:  "#EBF3FF",
+          50: "#EBF3FF",
           100: "#C8DFFE",
           200: "#91BDFD",
           400: "#378ADD",
@@ -23,20 +22,20 @@ const config = {
           900: "#042C53",
         },
         success: {
-          50:  "#E6F7F1",
+          50: "#E6F7F1",
           100: "#C0EAD9",
           400: "#1D9E75",
           500: "#17845F",
           600: "#0F6E56",
         },
         amber: {
-          50:  "#FAEEDA",
+          50: "#FAEEDA",
           400: "#EF9F27",
           600: "#854F0B",
           800: "#412402",
         },
         danger: {
-          50:  "#FCEBEB",
+          50: "#FCEBEB",
           400: "#E24B4A",
           600: "#A32D2D",
         },

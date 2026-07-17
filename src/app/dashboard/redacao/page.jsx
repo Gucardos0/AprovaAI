@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { supabase } from "@/lib/supabase-browser";
 
 const TEMAS = [
   "O papel da tecnologia na redução das desigualdades sociais no Brasil",
@@ -38,10 +39,18 @@ export default function RedacaoPage() {
   const [correcao, setCorrecao] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [userId, setUserId] = useState(null);
   const textareaRef = useRef(null);
 
   const palavras = texto.trim() === "" ? 0 : texto.trim().split(/\s+/).length;
   const tema = temasSorteados[temaIdx];
+
+  // Busca o usuário logado
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUserId(data.user?.id ?? null);
+    });
+  }, []);
 
   const handleSortear = useCallback(() => {
     setTemasSorteados(sortear3Temas());
@@ -67,7 +76,39 @@ export default function RedacaoPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
+
       setCorrecao(data.correcao);
+
+      // Salva redação e correção no Supabase se houver usuário logado
+      if (userId) {
+        const { data: provaData } = await supabase
+          .from("prova")
+          .select("id")
+          .eq("nome", "ENEM")
+          .single();
+
+        const { data: redacaoSalva } = await supabase
+          .from("redacao")
+          .insert({
+            usuario_id: userId,
+            prova_id: provaData?.id ?? null,
+            tema,
+            conteudo: texto,
+            palavras,
+          })
+          .select()
+          .single();
+
+        if (redacaoSalva) {
+          await supabase.from("correcao_redacao").insert({
+            redacao_id: redacaoSalva.id,
+            nota_total: data.correcao.nota,
+            competencias: data.correcao.competencias,
+            feedback_geral: data.correcao.feedbackGeral,
+            pontos_melhora: data.correcao.pontosMelhora,
+          });
+        }
+      }
     } catch (err) {
       setError(err.message ?? "Erro ao corrigir. Tente novamente.");
     } finally {
@@ -86,10 +127,18 @@ export default function RedacaoPage() {
     <div>
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="font-sora font-bold text-2xl text-gray-900 mb-1">Redação</h1>
-          <p className="text-gray-400 text-sm">Escreva e receba correção com critérios reais do ENEM</p>
+          <h1 className="font-sora font-bold text-2xl text-gray-900 mb-1">
+            Redação
+          </h1>
+          <p className="text-gray-400 text-sm">
+            Escreva e receba correção com critérios reais do ENEM
+          </p>
         </div>
-        <Button onClick={handleCorrigir} loading={loading} disabled={palavras < 50}>
+        <Button
+          onClick={handleCorrigir}
+          loading={loading}
+          disabled={palavras < 50}
+        >
           🤖 Corrigir com IA
         </Button>
       </div>
@@ -111,14 +160,21 @@ export default function RedacaoPage() {
           {temasSorteados.map((t, i) => (
             <button
               key={t}
-              onClick={() => { setTemaIdx(i); setCorrecao(null); }}
+              onClick={() => {
+                setTemaIdx(i);
+                setCorrecao(null);
+              }}
               className={`text-left px-4 py-3 rounded-xl border text-sm transition-all ${
                 temaIdx === i
                   ? "border-brand-500 bg-brand-50 text-brand-700 font-medium"
                   : "border-gray-100 hover:border-brand-200 text-gray-600"
               }`}
             >
-              {temaIdx === i && <span className="font-sora font-bold text-brand-500 mr-2">→</span>}
+              {temaIdx === i && (
+                <span className="font-sora font-bold text-brand-500 mr-2">
+                  →
+                </span>
+              )}
               {t}
             </button>
           ))}
@@ -127,15 +183,22 @@ export default function RedacaoPage() {
 
       {/* Editor */}
       <Card className="mb-4 overflow-hidden">
-        {/* Toolbar */}
         <div className="flex items-center gap-1 px-4 py-2.5 border-b border-gray-100">
           {["B", "I", "U"].map((f) => (
-            <button key={f} className="w-7 h-7 rounded-lg text-xs font-bold text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors">
+            <button
+              key={f}
+              className="w-7 h-7 rounded-lg text-xs font-bold text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+            >
               {f}
             </button>
           ))}
           <div className="w-px h-5 bg-gray-200 mx-1" />
-          <span className="text-xs text-gray-400 ml-2 font-sora">Tema: <span className="text-gray-600 font-medium">{tema.substring(0, 60)}...</span></span>
+          <span className="text-xs text-gray-400 ml-2 font-sora">
+            Tema:{" "}
+            <span className="text-gray-600 font-medium">
+              {tema.substring(0, 60)}...
+            </span>
+          </span>
         </div>
         <textarea
           ref={textareaRef}
@@ -151,50 +214,69 @@ export default function RedacaoPage() {
             <span className="mx-2">·</span>
             Mín: 150 · Máx: 300
           </span>
-          <span className={`text-xs font-semibold ${
-            palavras < 150 ? "text-amber-600" : palavras > 300 ? "text-danger-400" : "text-success-400"
-          }`}>
-            {palavras < 150 ? `Faltam ${150 - palavras} palavras` : palavras > 300 ? "Acima do limite" : "✓ Dentro do limite"}
+          <span
+            className={`text-xs font-semibold ${
+              palavras < 150
+                ? "text-amber-600"
+                : palavras > 300
+                  ? "text-danger-400"
+                  : "text-success-400"
+            }`}
+          >
+            {palavras < 150
+              ? `Faltam ${150 - palavras} palavras`
+              : palavras > 300
+                ? "Acima do limite"
+                : "✓ Dentro do limite"}
           </span>
         </div>
       </Card>
 
-      {/* Error */}
       {error && (
         <Card className="p-4 mb-4 bg-danger-50 border-danger-400">
           <p className="text-sm text-danger-600">⚠️ {error}</p>
         </Card>
       )}
 
-      {/* Loading */}
       {loading && (
         <Card className="p-8 text-center mb-4">
           <div className="w-10 h-10 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">IA analisando sua redação com os critérios do ENEM...</p>
-          <p className="text-gray-400 text-xs mt-1">Isso pode levar alguns segundos</p>
+          <p className="text-gray-500 text-sm">
+            IA analisando sua redação com os critérios do ENEM...
+          </p>
+          <p className="text-gray-400 text-xs mt-1">
+            Isso pode levar alguns segundos
+          </p>
         </Card>
       )}
 
-      {/* Correction result */}
       {correcao && (
         <Card className="p-6 animate-fade-up">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="font-sora font-bold text-lg text-gray-900 mb-1">Correção pela IA</h3>
-              <p className="text-xs text-gray-400">Baseada nos critérios oficiais do ENEM</p>
+              <h3 className="font-sora font-bold text-lg text-gray-900 mb-1">
+                Correção pela IA
+              </h3>
+              <p className="text-xs text-gray-400">
+                Baseada nos critérios oficiais do ENEM
+              </p>
             </div>
             <div className="bg-brand-500 text-white font-sora font-bold text-2xl px-5 py-2.5 rounded-2xl">
-              {correcao.nota} <span className="text-sm font-normal opacity-75">/ 1000</span>
+              {correcao.nota}{" "}
+              <span className="text-sm font-normal opacity-75">/ 1000</span>
             </div>
           </div>
 
-          {/* Competencias */}
           <div className="space-y-3 mb-6">
             {correcao.competencias.map((c, i) => (
               <div key={i}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs text-gray-600 font-medium">{c.nome}</span>
-                  <span className="text-xs font-semibold text-gray-700 font-sora">{c.nota}/{c.maximo}</span>
+                  <span className="text-xs text-gray-600 font-medium">
+                    {c.nome}
+                  </span>
+                  <span className="text-xs font-semibold text-gray-700 font-sora">
+                    {c.nota}/{c.maximo}
+                  </span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
                   <div
@@ -207,19 +289,26 @@ export default function RedacaoPage() {
             ))}
           </div>
 
-          {/* General feedback */}
           <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <p className="font-sora font-semibold text-sm text-gray-700 mb-2">📋 Análise geral</p>
-            <p className="text-sm text-gray-600 leading-relaxed">{correcao.feedbackGeral}</p>
+            <p className="font-sora font-semibold text-sm text-gray-700 mb-2">
+              📋 Análise geral
+            </p>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {correcao.feedbackGeral}
+            </p>
           </div>
 
-          {/* Points to improve */}
           {correcao.pontosMelhora.length > 0 && (
             <div className="bg-amber-50 rounded-xl p-4">
-              <p className="font-sora font-semibold text-sm text-amber-700 mb-3">💡 Principais pontos de melhora</p>
+              <p className="font-sora font-semibold text-sm text-amber-700 mb-3">
+                💡 Principais pontos de melhora
+              </p>
               <ul className="space-y-2">
                 {correcao.pontosMelhora.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-amber-800">
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-amber-800"
+                  >
                     <span className="flex-shrink-0 mt-0.5">→</span>
                     {p}
                   </li>
