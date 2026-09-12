@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase-browser";
+import { BotMessageSquare, User} from "lucide-react";
 
 const SUGGESTIONS = [
   "Explique a Guerra Fria de forma simples",
@@ -18,7 +19,7 @@ const SUGGESTIONS = [
 const INITIAL_MESSAGE = {
   role: "assistant",
   content:
-    "Olá! Sou sua IA Tutora da AprovaAI 🤖\n\nAnalisei seus resultados e vi que você pode melhorar em **Redação** e **História**. Quer que eu explique algum tema, crie questões personalizadas ou tire alguma dúvida?\n\nEstou aqui para te ajudar a conquistar sua aprovação! 🎯",
+    "Olá! Sou sua IA Tutora da AprovaAI \n\nAnalisei seus resultados e vi que você pode melhorar em **Redação** e **História**. Quer que eu explique algum tema, crie questões personalizadas ou tire alguma dúvida?\n\nEstou aqui para te ajudar a conquistar sua aprovação! ",
 };
 
 export default function IAPage() {
@@ -180,7 +181,7 @@ export default function IAPage() {
       {/* Header */}
       <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
         <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-brand-500 to-brand-400 flex items-center justify-center text-xl">
-          🤖
+          <BotMessageSquare></BotMessageSquare>
         </div>
         <div>
           <h1 className="font-sora font-bold text-lg text-gray-900">
@@ -213,7 +214,7 @@ export default function IAPage() {
                   : "bg-gray-100",
               )}
             >
-              {msg.role === "assistant" ? "🤖" : "👤"}
+              {msg.role === "assistant" ? <BotMessageSquare></BotMessageSquare> : <User></User>}
             </div>
             <div
               className={cn(
@@ -237,7 +238,7 @@ export default function IAPage() {
 
       {error && (
         <div className="bg-danger-50 border border-danger-400/20 rounded-xl px-4 py-2.5 mb-3">
-          <p className="text-sm text-danger-600">⚠️ {error}</p>
+          <p className="text-sm text-danger-600"> {error}</p>
         </div>
       )}
 

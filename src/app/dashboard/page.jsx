@@ -5,32 +5,34 @@ import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase-browser";
+import { BotMessageSquare, Camera, Flame, Hourglass, PartyPopper, Pencil, StickyNote, Target, Video,    } from "lucide-react";
+
 
 const ACOES = [
   {
     href: "/dashboard/exercicios",
-    icon: "✏️",
+    icon: <Pencil></Pencil>,
     bg: "bg-brand-50",
     label: "Resolver exercícios",
     sub: "Questões com IA",
   },
   {
     href: "/dashboard/redacao",
-    icon: "📝",
+    icon: <StickyNote></StickyNote>,
     bg: "bg-success-50",
     label: "Treinar redação",
     sub: "Tema do dia",
   },
   {
     href: "/dashboard/videos",
-    icon: "🎥",
+    icon: <Video></Video>,
     bg: "bg-amber-50",
     label: "Assistir videoaula",
     sub: "Recomendado pela IA",
   },
   {
     href: "/dashboard/ia",
-    icon: "🤖",
+    icon: <BotMessageSquare></BotMessageSquare>,
     bg: "bg-pink-50",
     label: "Falar com IA",
     sub: "Tirar dúvidas",
@@ -208,16 +210,16 @@ export default function DashboardPage() {
       {/* ── HEADER INSPIRADO NO DESCOMPLICA ──────────────────── */}
       <div className="relative rounded-[2rem] overflow-hidden bg-[#E8F5E9] px-8 py-10 shadow-sm border border-success-100 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="relative z-10 w-full md:w-2/3">
-          <p className="text-success-700 font-medium text-sm mb-2 uppercase tracking-wider">{saudacao} 👋</p>
+          <p className="text-success-700 font-medium text-sm mb-2 uppercase tracking-wider">{saudacao} </p>
           <h1 className="font-sora font-extrabold text-3xl md:text-4xl text-slate-900 mb-4 tracking-tight">
             Misture foco na sua rotina, {primeiroNome}.
           </h1>
           <div className="flex flex-wrap items-center gap-3">
             <span className="inline-flex items-center gap-2 bg-white text-slate-800 text-sm font-semibold px-4 py-2 rounded-full shadow-sm border border-success-50">
-              🎯 Faltam <strong className="text-success-600">{diasEnem} dias</strong> para o ENEM
+              <Target></Target> Faltam <strong className="text-success-600">{diasEnem} dias</strong> para o ENEM
             </span>
             <span className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 text-sm font-bold px-4 py-2 rounded-full shadow-sm">
-              🔥 7 dias de ofensiva
+              <Flame></Flame> 7 dias de ofensiva
             </span>
           </div>
         </div>
@@ -228,10 +230,10 @@ export default function DashboardPage() {
       {/* ── STATS INSPIRADO NO FERRETTO ─────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: "Questões Resolvidas", value: stats.questoes, color: "text-slate-800", bg: "bg-white", sub: "no total", icon: "📝" },
-          { label: "Taxa de Acerto", value: `${taxa}%`, color: "text-brand-600", bg: "bg-brand-50", sub: `${stats.acertos} corretas`, icon: "🎯" },
-          { label: "Redações Entregues", value: stats.redacoes, color: "text-slate-800", bg: "bg-white", sub: "corrigidas por IA", icon: "✍️" },
-          { label: "Contagem Regressiva", value: diasEnem, color: "text-slate-800", bg: "bg-white", sub: "dias restantes", icon: "⏳" },
+          { label: "Questões Resolvidas", value: stats.questoes, color: "text-slate-800", bg: "bg-white", sub: "no total", icon: <StickyNote></StickyNote> },
+          { label: "Taxa de Acerto", value: `${taxa}%`, color: "text-brand-600", bg: "bg-brand-50", sub: `${stats.acertos} corretas`, icon: <Target></Target> },
+          { label: "Redações Entregues", value: stats.redacoes, color: "text-slate-800", bg: "bg-white", sub: "corrigidas por IA", icon: <Pencil></Pencil> },
+          { label: "Contagem Regressiva", value: diasEnem, color: "text-slate-800", bg: "bg-white", sub: "dias restantes", icon: <Hourglass></Hourglass> },
         ].map((s, i) => (
           <Card key={i} className={`p-6 rounded-2xl border-none shadow-sm ${s.bg}`}>
             <div className="flex flex-col h-full justify-between gap-4">
@@ -285,7 +287,7 @@ export default function DashboardPage() {
           
           {desempenho.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-              <span className="text-4xl mb-3">📊</span>
+              <span className="text-4xl mb-3"></span>
               <p className="font-sora font-bold text-slate-700 text-sm mb-1">Ainda não há dados</p>
               <p className="text-sm text-slate-500 text-center px-4">Resolva exercícios para acompanhar sua evolução.</p>
             </div>
@@ -322,7 +324,7 @@ export default function DashboardPage() {
 
           {tarefas.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-              <span className="text-4xl mb-3">🎉</span>
+              <span className="text-4xl mb-3"><PartyPopper></PartyPopper></span>
               <p className="font-sora font-bold text-slate-700 text-sm mb-1">Tudo limpo!</p>
               <p className="text-sm text-slate-500">Nenhuma meta pendente para hoje.</p>
             </div>

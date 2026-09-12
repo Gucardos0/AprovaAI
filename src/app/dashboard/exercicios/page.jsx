@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { cn, getDificuldadeColor } from "@/lib/utils";
 import { supabase } from "@/lib/supabase-browser";
+import { Pencil } from "lucide-react";
 
 const MATERIAS = [
   "Matemática",
@@ -198,7 +199,7 @@ export default function ExerciciosPage() {
           </div>
         </div>
         <Button onClick={gerarQuestao} loading={loading}>
-          ✨ Gerar questão com IA
+           Gerar questão com IA
         </Button>
       </Card>
 
@@ -323,7 +324,7 @@ export default function ExerciciosPage() {
       {/* Empty state */}
       {!questao && !loading && !error && (
         <Card className="p-12 text-center">
-          <div className="text-4xl mb-4">✏️</div>
+          <div className="text-4xl mb-4 p-2 flex justify-center"><Pencil size={60}/></div>
           <h3 className="font-sora font-semibold text-gray-700 mb-2">
             Pronto para praticar?
           </h3>
@@ -332,7 +333,7 @@ export default function ExerciciosPage() {
             <strong>Gerar questão com IA</strong>.
           </p>
           <Button onClick={gerarQuestao}>
-            ✨ Gerar minha primeira questão
+             Gerar minha primeira questão
           </Button>
         </Card>
       )}

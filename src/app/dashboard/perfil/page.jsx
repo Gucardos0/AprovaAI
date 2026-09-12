@@ -4,18 +4,19 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/Card";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { supabase } from "@/lib/supabase-browser";
+import { Star,Flame, Rocket, Target, Zap, Sparkles, GraduationCap, StickyNote, Trophy, CalendarDays, PartyPopper, } from "lucide-react";
 
 const TODAS_CONQUISTAS = [
-  { criterio: "7_dias_streak", icon: "🔥", nome: "7 dias seguidos" },
-  { criterio: "10_redacoes", icon: "📝", nome: "10 redações" },
-  { criterio: "100_questoes", icon: "💯", nome: "100 questões" },
-  { criterio: "90_pct_matematica", icon: "🎓", nome: "Mestre de Mat." },
-  { criterio: "top_100", icon: "🏆", nome: "Top 100" },
-  { criterio: "30_dias_streak", icon: "⚡", nome: "30 dias" },
-  { criterio: "900_redacao", icon: "🌟", nome: "Nota 900+" },
-  { criterio: "500_questoes", icon: "🎯", nome: "500 questões" },
-  { criterio: "plano_completo", icon: "📚", nome: "Todas matérias" },
-  { criterio: "aprovado", icon: "🚀", nome: "Aprovado!" },
+  { criterio: "7_dias_streak", icon: <Flame></Flame> , nome: "7 dias seguidos" },
+  { criterio: "10_redacoes", icon: <StickyNote></StickyNote>, nome: "10 redações" },
+  { criterio: "100_questoes", icon: <PartyPopper></PartyPopper>, nome: "100 questões" },
+  { criterio: "90_pct_matematica", icon: <GraduationCap></GraduationCap>, nome: "Mestre de Mat." },
+  { criterio: "top_100", icon: <Trophy></Trophy>, nome: "Top 100" },
+  { criterio: "30_dias_streak", icon: <Zap></Zap>, nome: "30 dias" },
+  { criterio: "900_redacao", icon: <Sparkles></Sparkles>, nome: "Nota 900+" },
+  { criterio: "500_questoes", icon: <Target></Target>, nome: "500 questões" },
+  { criterio: "plano_completo", icon: <CalendarDays></CalendarDays>, nome: "Todas matérias" },
+  { criterio: "aprovado", icon: <Rocket></Rocket>, nome: "Aprovado!" },
 ];
 
 export default function PerfilPage() {
@@ -142,7 +143,7 @@ export default function PerfilPage() {
             </h2>
             <div className="flex items-center gap-2 mb-2">
               <span className="inline-flex items-center gap-1.5 bg-brand-50 text-brand-500 text-xs font-semibold font-sora px-3 py-1 rounded-full">
-                ⭐ Nível {nivel}
+                <Star></Star> Nível {nivel}
               </span>
               <span className="text-xs text-gray-400">
                 · {perfil?.prova?.nome ?? "ENEM"}
