@@ -223,7 +223,7 @@ function VideoModal({ tarefa, onClose }) {
           busca:   tarefa.titulo,
           max:     "1",
         });
-        const res  = await fetch(`/api/youtube?${params}`);
+        const res = await fetch(`/api/video-youtube?${params}`);
         const data = await res.json();
         setVideoId(data.videos?.[0]?.id ?? null);
       } catch {

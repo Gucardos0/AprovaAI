@@ -207,7 +207,7 @@ export default function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 pb-10">
       
-      {/* ── HEADER INSPIRADO NO DESCOMPLICA ──────────────────── */}
+      {/* ── HEADER  ──────────────────── */}
       <div className="relative rounded-[2rem] overflow-hidden bg-[#E8F5E9] px-8 py-10 shadow-sm border border-success-100 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="relative z-10 w-full md:w-2/3">
           <p className="text-success-700 font-medium text-sm mb-2 uppercase tracking-wider">{saudacao} </p>
@@ -227,7 +227,7 @@ export default function DashboardPage() {
         <div className="hidden md:flex relative z-10 w-32 h-32 bg-success-200 rounded-full opacity-50 blur-2xl"></div>
       </div>
 
-      {/* ── STATS INSPIRADO NO FERRETTO ─────────────────────── */}
+      {/* ── STATS  ─────────────────────── */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           { label: "Questões Resolvidas", value: stats.questoes, color: "text-slate-800", bg: "bg-white", sub: "no total", icon: <StickyNote></StickyNote> },

@@ -7,8 +7,18 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Dias da semana disponíveis (segunda a sábado)
+// Dias da semana disponíveis (segunda a sábado) — índices 1 a 6 (0 = domingo, pulamos)
 const DIAS_SEMANA = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+// Mapeia nome do dia para offset (segunda=1, terça=2... sábado=6 dentro da semana)
+const DIA_OFFSET = {
+  "segunda": 1,
+  "terça":   2,
+  "quarta":  3,
+  "quinta":  4,
+  "sexta":   5,
+  "sábado":  6,
+};
 
 // Distribui matérias nos dias com base nos pontos fracos do aluno
 function distribuirMaterias(pontosFracos, pontosFortes, diasAteEnem) {
@@ -26,13 +36,6 @@ function distribuirMaterias(pontosFracos, pontosFortes, diasAteEnem) {
     pesos[m] = peso;
   });
 
-  // Normaliza pesos para distribuição nos dias
-  const totalPeso = Object.values(pesos).reduce((a, b) => a + b, 0);
-  const diasPorMateria = {};
-  todasMaterias.forEach((m) => {
-    diasPorMateria[m] = Math.max(1, Math.round((pesos[m] / totalPeso) * semanas * 6));
-  });
-
   // Rastreia progresso em cada matéria
   const progressoTopico = {};
   todasMaterias.forEach((m) => { progressoTopico[m] = 0; });
@@ -41,8 +44,7 @@ function distribuirMaterias(pontosFracos, pontosFortes, diasAteEnem) {
   for (let semana = 0; semana < semanas; semana++) {
     const semanaPlano = {
       semana: semana + 1,
-      dataInicio: calcularData(new Date().toISOString().split("T")[0], semana * 7),
-dataFim:    calcularData(new Date().toISOString().split("T")[0], semana * 7 + 6),
+      semanaIndex: semana, // ← índice 0-based para cálculo de datas
       dias: [],
     };
 
@@ -74,10 +76,12 @@ dataFim:    calcularData(new Date().toISOString().split("T")[0], semana * 7 + 6)
         if (idxTopico < topicos.length) {
           tarefasDia.push({
             materia,
-            topico:      topicos[idxTopico],
+            topico:       topicos[idxTopico],
             indiceTopico: idxTopico,
-            duracao_min: materia === "Redação" ? 60 : 45,
-            status:      "pendente",
+            duracao_min:  materia === "Redação" ? 60 : 45,
+            status:       "pendente",
+            // ← Guarda o offset de dia: semana * 7 + offset do dia na semana
+            diaOffset: semana * 7 + DIA_OFFSET[dia],
           });
           progressoTopico[materia]++;
         }
@@ -95,7 +99,7 @@ dataFim:    calcularData(new Date().toISOString().split("T")[0], semana * 7 + 6)
 }
 
 function calcularData(dataBase, diasOffset) {
-  const d = new Date(dataBase);
+  const d = new Date(dataBase + "T00:00:00");
   d.setDate(d.getDate() + diasOffset);
   return d.toISOString().split("T")[0];
 }
@@ -110,7 +114,7 @@ function calcularDiasAteEnem() {
 
 export async function POST(req) {
   try {
-const { usuarioId, pontosFracos = [], pontosFortes = [] } = await req.json();
+    const { usuarioId, pontosFracos = [], pontosFortes = [] } = await req.json();
 
     if (!usuarioId) {
       return NextResponse.json(
@@ -119,53 +123,32 @@ const { usuarioId, pontosFracos = [], pontosFortes = [] } = await req.json();
       );
     }
 
-    
-
-    
-    // 3. Calcula dias até o ENEM
+    // Calcula dias até o ENEM
     const diasAteEnem = calcularDiasAteEnem();
 
-    // 4. Gera o plano distribuído
+    // Gera o plano distribuído
     const planoGerado = distribuirMaterias(pontosFracos, pontosFortes, diasAteEnem);
-    
-   const dataBase = new Date().toISOString().split("T")[0];
 
-const { data: planoSalvo, error: planoError } = await supabaseAdmin
-  .from("plano_estudo")
-  .insert({
-    usuario_id:  usuarioId,
-    prova_id:    null,
-    data_inicio: dataBase,
-    data_prova:  calcularData(dataBase, diasAteEnem),
-  })
-  .select()
-  .single();
-      console.log("--- DEBUG DA GERAÇÃO ---");
+    console.log("--- DEBUG DA GERAÇÃO ---");
     console.log("Total de matérias no CURRICULO:", Object.keys(CURRICULO).length);
     console.log("Semanas geradas:", planoGerado.length);
+    console.log("Dias até o ENEM:", diasAteEnem);
 
+    const dataBase = new Date().toISOString().split("T")[0];
+
+    // Salva o plano no banco
+    const { data: planoSalvo, error: planoError } = await supabaseAdmin
+      .from("plano_estudo")
+      .insert({
+        usuario_id:  usuarioId,
+        prova_id:    null,
+        data_inicio: dataBase,
+        data_prova:  calcularData(dataBase, diasAteEnem),
+      })
+      .select()
+      .single();
 
     if (planoError) throw planoError;
-
-    // 6. Salva as tarefas semana a semana
-    const tarefasParaSalvar = [];
-let diaOffset = 0;
-
-planoGerado.forEach((semana) => {
-  semana.dias.forEach((diaPlano) => {
-    diaPlano.tarefas.forEach((tarefa) => {
-      tarefasParaSalvar.push({
-        plano_id:      planoSalvo.id,
-        materia_nome:  tarefa.materia,
-        titulo:        tarefa.topico,
-        duracao_min:   tarefa.duracao_min,
-        data_prevista: calcularData(dataBase, diaOffset),
-        status:        "pendente",
-      });
-    });
-    diaOffset++;
-  });
-});
 
     // Busca IDs das matérias
     const { data: materiasDB } = await supabaseAdmin
@@ -175,22 +158,38 @@ planoGerado.forEach((semana) => {
     const materiaMap = {};
     materiasDB?.forEach((m) => { materiaMap[m.nome] = m.id; });
 
-    // Insere tarefas em batch
-    const tarefasComId = tarefasParaSalvar.map((t) => ({
-      plano_id:     t.plano_id,
-      materia_id:   materiaMap[t.materia_nome] ?? null,
-      titulo:       t.titulo,
-      duracao_min:  t.duracao_min,
-      data_prevista: t.data_prevista,
-      status:       t.status,
-    }));
+    // Monta tarefas usando o diaOffset correto (calculado por semana + dia)
+    const tarefasComId = [];
 
-   for (let i = 0; i < tarefasComId.length; i += 100) {
+    planoGerado.forEach((semana) => {
+      semana.dias.forEach((diaPlano) => {
+        diaPlano.tarefas.forEach((tarefa) => {
+          // ← CORREÇÃO: usa tarefa.diaOffset que já tem semana * 7 + dia correto
+          const dataPrevista = calcularData(dataBase, tarefa.diaOffset);
+
+          tarefasComId.push({
+            plano_id:      planoSalvo.id,
+            materia_id:    materiaMap[tarefa.materia] ?? null,
+            titulo:        tarefa.topico,
+            duracao_min:   tarefa.duracao_min,
+            data_prevista: dataPrevista,
+            status:        tarefa.status,
+          });
+        });
+      });
+    });
+
+    console.log("Total de tarefas a salvar:", tarefasComId.length);
+    if (tarefasComId.length > 0) {
+      console.log("Primeira tarefa:", tarefasComId[0]);
+      console.log("Última tarefa:", tarefasComId[tarefasComId.length - 1]);
+    }
+
+    // Insere tarefas em batch (lotes de 100)
+    for (let i = 0; i < tarefasComId.length; i += 100) {
       const lote = tarefasComId.slice(i, i + 100);
-      
       const { error: erroInsert } = await supabaseAdmin.from("tarefa").insert(lote);
-      
-      // Se der erro ao salvar as tarefas, avisa o terminal e para tudo!
+
       if (erroInsert) {
         console.error("[ERRO NO SUPABASE AO SALVAR TAREFAS]:", erroInsert);
         throw new Error("Falha ao salvar as tarefas no banco de dados.");
