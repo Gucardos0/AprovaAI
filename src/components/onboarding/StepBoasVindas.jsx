@@ -37,6 +37,9 @@ export function StepBoasVindas() {
           <Button size="lg" variant="secondary" onClick={() => window.location.href = "/dashboard"}>
             Ver demo
           </Button>
+          <Button size ="lg" variant="secondary" onClick={() =>window.location.href = "/login"} >
+            Login
+          </Button>
         </div>
 
         {/* Social proof */}

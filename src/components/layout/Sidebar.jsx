@@ -5,15 +5,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/Logo";
 import { cn } from "@/lib/utils";
+import { BotMessageSquare,Home, Hourglass, Pencil, User, Video, StickyNote, CalendarDays} from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", icon: "🏠", label: "Dashboard" },
-  { href: "/dashboard/plano", icon: "📅", label: "Plano de Estudos" },
-  { href: "/dashboard/exercicios", icon: "✏️", label: "Exercícios" },
-  { href: "/dashboard/redacao", icon: "📝", label: "Redação" },
-  { href: "/dashboard/videos", icon: "🎥", label: "Videoaulas" },
-  { href: "/dashboard/ia", icon: "🤖", label: "IA Tutora" },
-  { href: "/dashboard/perfil", icon: "👤", label: "Perfil" },
+  { href: "/dashboard", icon: <Home></Home>, label: "Dashboard" },
+  { href: "/dashboard/plano", icon: <CalendarDays></CalendarDays>, label: "Plano de Estudos" },
+  { href: "/dashboard/exercicios", icon: <Pencil/>, label: "Exercícios" },
+  { href: "/dashboard/redacao", icon: <StickyNote></StickyNote>, label: "Redação" },
+  { href: "/dashboard/videos", icon: <Video></Video>, label: "Videoaulas" },
+  { href: "/dashboard/ia", icon: <BotMessageSquare></BotMessageSquare>, label: "IA Tutora" },
+  { href: "/dashboard/perfil", icon: <User></User>, label: "Perfil" },
 ];
 
 const SECTIONS = [
@@ -93,9 +94,10 @@ const diasEnem = diasParaEnem()
           <p className="font-sora font-extrabold text-slate-800 text-base mb-3 relative z-10">
             ENEM 2026
           </p>
+          
           <div className="inline-flex items-center bg-white px-3 py-1.5 rounded-xl shadow-sm relative z-10 border border-white/50">
             <span className="text-xs font-bold text-brand-600">
-              {diasEnem !== null ? `⏳ Faltam ${diasEnem} dias` : "Calculando..."}
+              {diasEnem !== null ? ` Faltam ${diasEnem} dias` : "Calculando..."}  {/* add Icone Houerglass  */}
             </span>
           </div>
         </div>

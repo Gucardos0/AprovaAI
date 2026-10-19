@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  allowedDevOrigins: ["192.168.0.36"],
+  turbopack: {
+    root: __dirname,
+  },
+};
 
-module.exports = {
-  allowedDevOrigins: ['192.168.0.36'],
-}
+module.exports = nextConfig;
