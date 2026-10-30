@@ -67,7 +67,7 @@ Responda APENAS com JSON válido neste formato exato, sem markdown, sem backtick
     { "letra": "D", "texto": "alternativa D" },
     { "letra": "E", "texto": "alternativa E" }
   ],
-  "gabarito": "C",
+  "gabarito": "letra correta (A, B, C, D ou E)",
   "explicacao": "explicação detalhada do gabarito e por que as outras alternativas estão erradas",
   "fonte": "similar ao ${prova} ${new Date().getFullYear()}"
 }
